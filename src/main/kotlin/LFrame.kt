@@ -1,10 +1,6 @@
 package org.example
 
-import java.awt.Color
-import java.awt.Container
-import java.awt.Dimension
-import java.awt.GridLayout
-import java.awt.Point
+import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.*
@@ -24,6 +20,7 @@ class LFrame : JFrame() {
 
     fun initFrame() {
         defaultCloseOperation = EXIT_ON_CLOSE
+        title = "Minesweeper"
         cp.add(getStartMenu())
         pack()
         setLocationRelativeTo(null)
@@ -62,13 +59,13 @@ class LFrame : JFrame() {
         val btnContainer = Container()
 //        btnContainer.setBounds(100,100,width * 20, height * 20)
 //        btnContainer.isFocusable = false
-        btnContainer.layout = GridLayout(btnField.width, btnField.height)
+//        btnContainer.layout = GridLayout(btnField.width, btnField.height)
+        btnContainer.layout = null
 
         val scroll = JScrollPane(btnContainer)
         scroll.setBounds(50,50,700, 500)
         scroll.verticalScrollBar.unitIncrement = 10
         scroll.horizontalScrollBar.unitIncrement = 10
-//        scroll.isWheelScrollingEnabled = false
         scroll.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_ALWAYS
         scroll.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS
         scroll.border = BorderFactory.createRaisedBevelBorder()
@@ -79,19 +76,43 @@ class LFrame : JFrame() {
             for (x in 0..<btnField.width) {
                 btnList.add(SweeperTile())
                 val n = y * btnField.width + x
-                btnList[n].preferredSize = Dimension(20,20)
+
+                btnList[n].size = Dimension(20,20)
+                btnList[n].setBounds(x  * 20, y * 20, 20,20)
+
                 btnList[n].setFocusPainted(false)
                 btnList[n].isFocusable = false
                 btnList[n].border = BorderFactory.createRaisedBevelBorder()
                 btnList[n].background = Color(200, 200, 200)
                 btnList[n].addActionListener{
-                    if(btnList[n].getTileValue() == "B") exitProcess(0)
-                    revealNumbers(btnList, n)
+                    if((btnList[n].text == "F") && (!btnList[n].isRevealed())) {
+                        btnList[n].text =  ""
+                        bombsLeft++
+                    }
+                    else if(!btnList[n].isRevealed()) {
+                        btnList[n].text =  "F"
+                        bombsLeft--
+                    }
+                    println(bombsLeft)
                 }
                 btnList[n].addMouseListener(object : MouseAdapter() {
                     override fun mouseReleased(e: MouseEvent?) {
+                        println(bombsLeft)
                         super.mouseReleased(e)
-                        if(e?.button == MouseEvent.BUTTON3) btnList[n].text = "F"
+                        if(e?.button == MouseEvent.BUTTON3) {
+                            if(!btnList[n].isRevealed()) {
+                                if(btnList[n].getTileValue() == "B") exitProcess(0)
+                                btnList[n].background = Color(240, 240, 240)
+                                btnList[n].isOpaque = false
+                                btnList[n].foreground = Color.RED
+                                btnList[n].setNumberAsText()
+                                btnList[n].setRevealed()
+                                revealNumbers(btnList, n, false)
+                            }
+                            else {
+                                revealCluster(btnList, n)
+                            }
+                        }
                     }
                 })
                 btnContainer.add(btnList[n])

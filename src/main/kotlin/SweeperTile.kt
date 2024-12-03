@@ -5,6 +5,7 @@ import javax.swing.JButton
 class SweeperTile : JButton() {
     private var tileValue = ""
     private var revealed = false
+    private var checked = false
 
     fun setBomb() {
         this.tileValue = "B"
@@ -28,5 +29,10 @@ class SweeperTile : JButton() {
     }
     fun isRevealed(): Boolean {
         return revealed
+    }fun setChecked() {
+        this.checked = true
+    }
+    fun isChecked(): Boolean {
+        return checked
     }
 }
