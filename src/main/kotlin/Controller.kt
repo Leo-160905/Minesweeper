@@ -140,14 +140,13 @@ fun revealNumbers(list: ArrayList<SweeperTile>, n: Int, forceFlag: Boolean) {
                 iNew,
                 false
             )
-            else return
         }
         return
     }
     return
 }
 
-// starts revealing when enought flags are set
+// starts revealing when enough flags are set
 fun revealCluster(list: ArrayList<SweeperTile>, n: Int) {
     val x = n % btnField.width
     val y = n / btnField.width
