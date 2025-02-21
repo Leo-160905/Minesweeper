@@ -2,12 +2,14 @@ package org.example
 
 import java.awt.Color
 import java.awt.Dimension
+import java.awt.Point
 import java.util.Random
+import kotlin.system.exitProcess
 
 lateinit var frame: LFrame
-var gameDifficulty = 3
-val btnField = Dimension(35, 25)
-var bombsLeft = 0
+var btnField = Dimension(34, 24)
+var bombsCount = 100
+var tilesCovered = btnField.height * btnField.width
 
 fun initGame() {
     frame = LFrame()
@@ -18,15 +20,17 @@ fun initGame() {
 fun startGame() {
     frame.loadScenes(frame.getGameScene())
     distributeBombsAndNumbers(frame.btnList)
+    checkGameWon()
 }
 
 fun setUpGame() {
-    println("TODO") // Todo
+    frame.loadScenes(frame.getSetupScene())
 }
 
-fun getIndexes8(i: Int, x: Int, y: Int): Int {
+fun getIndexes8(i: Int, x: Int, y: Int): Point {
     var xn = 0
     var yn = 0
+
     when (i) {
         0 -> {
             xn = x - 1
@@ -68,98 +72,140 @@ fun getIndexes8(i: Int, x: Int, y: Int): Int {
             yn = y + 1
         }
     }
-    return yn * btnField.width + xn
+    return if (xn >= 0 && xn < btnField.width && yn >= 0 && yn < btnField.height) Point(xn, yn) else Point(-1, -1)
 }
 
-fun getIndexes4(i: Int, x: Int, y: Int): Int {
-    var retVal = 0
+fun getIndexes4(i: Int, x: Int, y: Int): Point {
+    var xn = x
+    var yn = y
     when (i) {
-        0 -> retVal = (y - 1) * btnField.width + x
-        1 -> retVal = y * btnField.width + (x - 1)
-        2 -> retVal = y * btnField.width + (x + 1)
-        3 -> retVal = (y + 1) * btnField.width + x
+        0 -> yn -= 1
+        1 -> xn -= 1
+        2 -> xn += 1
+        3 -> yn += 1
     }
-    return retVal
+    return if (xn >= 0 && xn < btnField.width && yn >= 0 && yn < btnField.height) Point(xn, yn) else Point(-1, -1)
 }
 
-fun distributeBombsAndNumbers(list: ArrayList<SweeperTile>) {
+fun distributeBombsAndNumbers(list: ArrayList<ArrayList<SweeperTile>>) {
     val rand = Random()
-    list.forEach {
-        if (rand.nextInt(5 * gameDifficulty) == 0) {
-            it.setBomb()
-            bombsLeft++
+    for (i in 0..<bombsCount) {
+        var bombIsSet = false
+        while (!bombIsSet){
+            val x = rand.nextInt(btnField.width)
+            val y = rand.nextInt(btnField.height)
+            if(!list[y][x].isBomb()) {
+                list[y][x].setBomb()
+                bombIsSet = true
+            }
         }
     }
 
-    list.forEachIndexed { i, it ->
-        val x = i % btnField.width
-        val y = i / btnField.width
-        if (!it.isBomb()) {
-            var count = 0
-            for (j in 0..<8) {
-                val n = getIndexes8(j, x, y)
+    println("finished distributing")
+    for (y in 0..<list.size) {
+        list[y].forEachIndexed { x, it ->
+            if (!it.isBomb()) {
+                var count = 0
+                for (j in 0..<8) {
+                    val n = getIndexes8(j, x, y)
+                    val xn = n.x
+                    val yn = n.y
 
-                val xn = n % btnField.width
-                val yn = n / btnField.width
-                if (xn >= 0 && xn + 1 < btnField.width && yn >= 0 && yn + 1 < btnField.height) {
-                    if (frame.btnList[n].isBomb()) count++
+                    if (xn != -1) {
+                        if (frame.btnList[yn][xn].isBomb()) count++
+                    }
                 }
+                frame.btnList[y][x].setTileValue(count.toString())
             }
-            frame.btnList[y * btnField.width + x].setTileValue(count.toString())
         }
     }
 }
 
-fun revealNumbers(list: ArrayList<SweeperTile>, n: Int, forceFlag: Boolean) {
+fun revealNumbers(list: ArrayList<ArrayList<SweeperTile>>, x: Int, y: Int) {
 
-    if(!forceFlag) {
-        if (list[n].isChecked()) return
-        else list[n].setChecked()
+    if (list[y][x].isChecked()) return
+    else {
+        list[y][x].setChecked()
     }
 
-    val x = n % btnField.width
-    val y = n / btnField.width
-    if (list[n].getTileValue() == "0" || forceFlag) {
+    if (list[y][x].getTileValue() == "0") {
         //uncover btn
         for (i in 0..<8) {
             val iNew = getIndexes8(i, x, y)
-            if (iNew >= 0 && iNew < btnField.width * btnField.height && x - 1 >= 0 && x + 1 < btnField.width && !list[iNew].isBomb()) {
-                list[iNew].background = Color(240, 240, 240)
-                list[iNew].isOpaque = false
-                list[iNew].foreground = Color.RED
-                list[iNew].setNumberAsText()
-                list[iNew].setRevealed()
+            val xn = iNew.x
+            val yn = iNew.y
+            if (xn != -1 && !list[yn][xn].isBomb() && !list[yn][xn].isRevealed()) {
+                revealTile(list[yn][xn])
+                tilesCovered--
             }
         }
 
         // move on to next btn to uncover new ones
         for (i in 0..<4) {
             val iNew = getIndexes4(i, x, y)
-            if (iNew >= 0 && iNew < btnField.width * btnField.height && x - 1 >= 0 && x + 1 < btnField.width) revealNumbers(
-                list,
-                iNew,
-                false
-            )
+            val xn = iNew.x
+            val yn = iNew.y
+
+            if (xn != -1)
+                revealNumbers(list, xn, yn)
         }
         return
     }
     return
 }
 
-// starts revealing when enough flags are set
-fun revealCluster(list: ArrayList<SweeperTile>, n: Int) {
-    val x = n % btnField.width
-    val y = n / btnField.width
-    var bombsCount = 0
-    for (i in 0..8) {
-        val iNew = getIndexes8(i, x, y)
-        val xn = iNew % btnField.width
-        val yn = iNew / btnField.width
+fun revealTile(tile: SweeperTile) {
+    tile.background = Color(240, 240, 240)
+    tile.isOpaque = false
+    tile.foreground = Color.RED
+    tile.setNumberAsText()
+    tile.setRevealed()
+}
 
-        if (xn >= 0 && xn + 1 < btnField.width && yn >= 0 && yn + 1 < btnField.height) {
-            if (list[iNew].text == "F") bombsCount++
+// starts revealing when enough flags are set
+fun revealCluster(list: ArrayList<ArrayList<SweeperTile>>, x: Int, y: Int) {
+
+    var flagsCount = 0
+    // Counting the flags in the surrounding buttons
+    for (i in 0..<8) {
+        val iNew = getIndexes8(i, x, y)
+        val xn = iNew.x
+        val yn = iNew.y
+
+        if (xn >= 0 && xn < btnField.width && yn >= 0 && yn < btnField.height) {
+            if (list[yn][xn].text == "F") flagsCount++
         }
     }
-    println("$bombsCount : ${list[n].getTileValue()}")
-    if (bombsCount == list[n].getTileValue().toInt()) revealNumbers(list, n, true)
+
+    if (flagsCount == list[y][x].getTileValue().toInt()) {
+
+        for (i in 0..<8) {
+            val iNew = getIndexes8(i, x, y)
+            val xn = iNew.x
+            val yn = iNew.y
+
+            if (xn != -1) {
+                if (list[yn][xn].text != "F" && !list[yn][xn].isRevealed()) {
+                    if (list[yn][xn].isBomb()) endGame()
+                    else {
+                        revealTile(list[yn][xn])
+                        tilesCovered--
+                    }
+                    if (list[yn][xn].getTileValue() == "0") revealNumbers(list, xn, yn)
+                }
+            }
+        }
+    }
+}
+
+fun checkGameWon() {
+    frame.displayBombsCount(bombsCount, tilesCovered)
+    if (bombsCount <= 0 && tilesCovered == 0) {
+        println("Game won!!!")
+        exitProcess(0)
+    }
+}
+
+fun endGame() {
+    exitProcess(0)
 }

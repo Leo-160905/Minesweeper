@@ -4,7 +4,6 @@ import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.*
-import kotlin.system.exitProcess
 
 class LFrame : JFrame() {
     private val fSize = Dimension(800, 600)
@@ -13,9 +12,11 @@ class LFrame : JFrame() {
     // Start Menu components
     private val startGameBtn = JButton("Start Game")
     private val gameSettingsBtn = JButton("Setup Game")
+    private val bombsCountLabel = JLabel()
+    private val coveredTileCountLabel = JLabel()
 
     // Game components
-    val btnList: ArrayList<SweeperTile> = ArrayList()
+    val btnList: ArrayList<ArrayList<SweeperTile>> = ArrayList()
 
 
     fun initFrame() {
@@ -54,16 +55,21 @@ class LFrame : JFrame() {
         container.preferredSize = fSize
         container.layout = null
 
+        bombsCountLabel.setBounds(50, 10, 150, 40)
+        container.add(bombsCountLabel)
 
+        coveredTileCountLabel.setBounds(250, 10, 150, 40)
+        container.add(coveredTileCountLabel)
 
-        val btnContainer = Container()
-//        btnContainer.setBounds(100,100,width * 20, height * 20)
+        val btnContainer = JPanel()
+        btnContainer.preferredSize = Dimension(btnField.width * 20, btnField.height * 20)
 //        btnContainer.isFocusable = false
 //        btnContainer.layout = GridLayout(btnField.width, btnField.height)
         btnContainer.layout = null
 
-        val scroll = JScrollPane(btnContainer)
-        scroll.setBounds(50,50,700, 500)
+        val scroll = JScrollPane()
+        scroll.setViewportView(btnContainer)
+        scroll.setBounds(50, 50, 700, 500)
         scroll.verticalScrollBar.unitIncrement = 10
         scroll.horizontalScrollBar.unitIncrement = 10
         scroll.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_ALWAYS
@@ -73,52 +79,102 @@ class LFrame : JFrame() {
 
 
         for (y in 0..<btnField.height) {
+            btnList.add(ArrayList())
             for (x in 0..<btnField.width) {
-                btnList.add(SweeperTile())
-                val n = y * btnField.width + x
+                btnList[y].add(SweeperTile())
 
-                btnList[n].size = Dimension(20,20)
-                btnList[n].setBounds(x  * 20, y * 20, 20,20)
+//                btnList[y][x].preferredSize = Dimension(20,20)
+                btnList[y][x].setBounds(x * 20, y * 20, 20, 20)
 
-                btnList[n].setFocusPainted(false)
-                btnList[n].isFocusable = false
-                btnList[n].border = BorderFactory.createRaisedBevelBorder()
-                btnList[n].background = Color(200, 200, 200)
-                btnList[n].addActionListener{
-                    if((btnList[n].text == "F") && (!btnList[n].isRevealed())) {
-                        btnList[n].text =  ""
-                        bombsLeft++
-                    }
-                    else if(!btnList[n].isRevealed()) {
-                        btnList[n].text =  "F"
-                        bombsLeft--
-                    }
-                    println(bombsLeft)
+                btnList[y][x].setFocusPainted(false)
+//                btnList[y][x].text =  "${x}"
+                btnList[y][x].isFocusable = false
+                btnList[y][x].border = BorderFactory.createRaisedBevelBorder()
+                btnList[y][x].background = Color(200, 200, 200)
+                btnList[y][x].addActionListener {
+                    if ((btnList[y][x].text == "F") && (!btnList[y][x].isRevealed())) {
+                        btnList[y][x].text = "?"
+                        bombsCount++
+                        tilesCovered++
+                    } else if ((btnList[y][x].text == "?") && (!btnList[y][x].isRevealed())) {
+                        btnList[y][x].text = ""
+                    } else if (!btnList[y][x].isRevealed()) {
+                        btnList[y][x].text = "F"
+                        bombsCount--
+                        tilesCovered--
+                    } else if (btnList[y][x].isRevealed()) revealCluster(btnList, x, y)
+                    checkGameWon()
                 }
-                btnList[n].addMouseListener(object : MouseAdapter() {
+                btnList[y][x].addMouseListener(object : MouseAdapter() {
                     override fun mouseReleased(e: MouseEvent?) {
-                        println(bombsLeft)
                         super.mouseReleased(e)
-                        if(e?.button == MouseEvent.BUTTON3) {
-                            if(!btnList[n].isRevealed()) {
-                                if(btnList[n].getTileValue() == "B") exitProcess(0)
-                                btnList[n].background = Color(240, 240, 240)
-                                btnList[n].isOpaque = false
-                                btnList[n].foreground = Color.RED
-                                btnList[n].setNumberAsText()
-                                btnList[n].setRevealed()
-                                revealNumbers(btnList, n, false)
+                        if (e?.button == MouseEvent.BUTTON3) {
+                            if (!btnList[y][x].isRevealed()) {
+                                if (btnList[y][x].getTileValue() == "B") endGame()
+                                btnList[y][x].background = Color(240, 240, 240)
+                                btnList[y][x].isOpaque = false
+                                btnList[y][x].foreground = Color.RED
+                                btnList[y][x].setNumberAsText()
+                                btnList[y][x].setRevealed()
+                                tilesCovered--
+                                revealNumbers(btnList, x, y)
+                            } else {
+                                revealCluster(btnList, x, y)
                             }
-                            else {
-                                revealCluster(btnList, n)
-                            }
+                            checkGameWon()
                         }
                     }
                 })
-                btnContainer.add(btnList[n])
+                btnContainer.add(btnList[y][x])
             }
         }
 //        container.add(tArea)
+        return container
+    }
+
+    fun getSetupScene(): Container {
+        val container = Container()
+        container.preferredSize = fSize
+        container.layout = null
+
+        val widthField = JTextField(btnField.width)
+        widthField.setBounds((fSize.width + 100) / 2, 100, 50, 50)
+        container.add(widthField)
+
+        val widthLabel = JLabel("Game Field Width")
+        widthLabel.setBounds((fSize.width - 150) / 2, 100, 150, 50)
+        container.add(widthLabel)
+
+        val heightField = JTextField(btnField.height)
+        heightField.setBounds((fSize.width + 100) / 2, 175, 50, 50)
+        container.add(heightField)
+
+        val heightLabel = JLabel("Game Field Height")
+        heightLabel.setBounds((fSize.width - 150) / 2, 175, 150, 50)
+        container.add(heightLabel)
+
+        val bombsCountField = JTextField(bombsCount)
+        bombsCountField.setBounds((fSize.width + 100) / 2, 250, 50, 50)
+        container.add(bombsCountField)
+
+        val bombsCountLabel = JLabel("Bombs Count")
+        bombsCountLabel.setBounds((fSize.width - 150) / 2, 250, 150, 50)
+        container.add(bombsCountLabel)
+
+        val confirmBtn = JButton("save")
+        confirmBtn.setBounds((fSize.width - 200) / 2, 325, 200, 50)
+        confirmBtn.addActionListener {
+            try {
+                btnField = Dimension(widthField.text.toInt(), heightField.text.toInt())
+                bombsCount = bombsCountField.text.toInt()
+                tilesCovered = btnField.width * btnField.height
+                startGame()
+            }
+            catch (_:Exception){
+                JOptionPane.showMessageDialog(this, "Please just enter Numbers", "Error", JOptionPane.PLAIN_MESSAGE)
+            }
+        }
+        container.add(confirmBtn)
 
         return container
     }
@@ -129,5 +185,10 @@ class LFrame : JFrame() {
         revalidate()
         repaint()
         pack()
+    }
+
+    fun displayBombsCount(count: Int, coveredCount: Int) {
+        bombsCountLabel.text = "Bombs: $count"
+        coveredTileCountLabel.text = "Remaining: $coveredCount"
     }
 }
