@@ -91,15 +91,18 @@ class LFrame : JFrame() {
                 btnList[y][x].isFocusable = false
                 btnList[y][x].border = BorderFactory.createRaisedBevelBorder()
                 btnList[y][x].background = Color(200, 200, 200)
+                btnList[y][x].font = Font("Arial", Font.BOLD, 15)
                 btnList[y][x].addActionListener {
                     if ((btnList[y][x].text == "F") && (!btnList[y][x].isRevealed())) {
                         btnList[y][x].text = "?"
+                        btnList[y][x].foreground = Color.BLACK
                         bombsCount++
                         tilesCovered++
                     } else if ((btnList[y][x].text == "?") && (!btnList[y][x].isRevealed())) {
                         btnList[y][x].text = ""
                     } else if (!btnList[y][x].isRevealed()) {
                         btnList[y][x].text = "F"
+                        btnList[y][x].foreground = Color.RED
                         bombsCount--
                         tilesCovered--
                     } else if (btnList[y][x].isRevealed()) revealCluster(btnList, x, y)
