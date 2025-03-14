@@ -140,7 +140,8 @@ class LFrame : JFrame() {
         container.preferredSize = fSize
         container.layout = null
 
-        val widthField = JTextField(btnField.width)
+        val widthField = JTextField()
+        widthField.text = btnField.width.toString()
         widthField.setBounds((fSize.width + 100) / 2, 100, 50, 50)
         container.add(widthField)
 
@@ -148,7 +149,8 @@ class LFrame : JFrame() {
         widthLabel.setBounds((fSize.width - 150) / 2, 100, 150, 50)
         container.add(widthLabel)
 
-        val heightField = JTextField(btnField.height)
+        val heightField = JTextField()
+        heightField.text = btnField.height.toString()
         heightField.setBounds((fSize.width + 100) / 2, 175, 50, 50)
         container.add(heightField)
 
@@ -156,7 +158,8 @@ class LFrame : JFrame() {
         heightLabel.setBounds((fSize.width - 150) / 2, 175, 150, 50)
         container.add(heightLabel)
 
-        val bombsCountField = JTextField(bombsCount)
+        val bombsCountField = JTextField()
+        bombsCountField.text = bombsCount.toString()
         bombsCountField.setBounds((fSize.width + 100) / 2, 250, 50, 50)
         container.add(bombsCountField)
 
