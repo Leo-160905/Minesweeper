@@ -1,1 +1,1 @@
-# Simple Minesweeper replica
+## Simple Minesweeper replica
