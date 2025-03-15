@@ -4,6 +4,7 @@ import java.awt.Color
 import java.awt.Dimension
 import java.awt.Point
 import java.util.Random
+import javax.swing.JOptionPane
 import kotlin.system.exitProcess
 
 lateinit var frame: LFrame
@@ -75,7 +76,7 @@ fun getIndexes8(i: Int, x: Int, y: Int): Point {
     return if (xn >= 0 && xn < btnField.width && yn >= 0 && yn < btnField.height) Point(xn, yn) else Point(-1, -1)
 }
 
-fun getIndexes4(i: Int, x: Int, y: Int): Point {
+/*fun getIndexes4(i: Int, x: Int, y: Int): Point {
     var xn = x
     var yn = y
     when (i) {
@@ -85,7 +86,7 @@ fun getIndexes4(i: Int, x: Int, y: Int): Point {
         3 -> yn += 1
     }
     return if (xn >= 0 && xn < btnField.width && yn >= 0 && yn < btnField.height) Point(xn, yn) else Point(-1, -1)
-}
+}*/
 
 fun distributeBombsAndNumbers(list: ArrayList<ArrayList<SweeperTile>>) {
     val rand = Random()
@@ -141,8 +142,8 @@ fun revealNumbers(list: ArrayList<ArrayList<SweeperTile>>, x: Int, y: Int) {
         }
 
         // move on to next btn to uncover new ones
-        for (i in 0..<4) {
-            val iNew = getIndexes4(i, x, y)
+        for (i in 0..<8) {
+            val iNew = getIndexes8(i, x, y)
             val xn = iNew.x
             val yn = iNew.y
 
@@ -201,11 +202,12 @@ fun revealCluster(list: ArrayList<ArrayList<SweeperTile>>, x: Int, y: Int) {
 fun checkGameWon() {
     frame.displayBombsCount(bombsCount, tilesCovered)
     if (bombsCount <= 0 && tilesCovered == 0) {
-        println("Game won!!!")
+        JOptionPane.showMessageDialog(frame, "Game Won!!!", "Game Over", JOptionPane.INFORMATION_MESSAGE)
         exitProcess(0)
     }
 }
 
 fun endGame() {
+    JOptionPane.showMessageDialog(frame, "Game Lost!!!", "Game Over", JOptionPane.INFORMATION_MESSAGE)
     exitProcess(0)
 }
