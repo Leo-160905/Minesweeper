@@ -20,6 +20,7 @@ fun initGame() {
 
 fun startGame() {
     frame.loadScenes(frame.getGameScene())
+    frame.setLocationRelativeTo(null)
     distributeBombsAndNumbers(frame.btnList)
     checkGameWon()
 }

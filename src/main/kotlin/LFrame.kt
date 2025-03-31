@@ -4,9 +4,11 @@ import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.*
+import kotlin.math.roundToInt
 
 class LFrame : JFrame() {
     private val fSize = Dimension(800, 600)
+    private var fScale = 1f
     lateinit var cp: Container
 
     // Start Menu components
@@ -30,18 +32,19 @@ class LFrame : JFrame() {
 
     private fun getStartMenu(): Container {
         val container = Container()
-        container.preferredSize = fSize
+        container.preferredSize =
+            Dimension((fSize.width * fScale ).toInt(), (fSize.height * fScale ).toInt())
         container.layout = null
 
         val btnDimension = Dimension(150, 50)
-        startGameBtn.location = Point((fSize.width - btnDimension.width) / 2, 225)
+        startGameBtn.location = Point((fSize.width * fScale  - 150).toInt() / 2, 225)
         startGameBtn.size = btnDimension
         startGameBtn.isVisible = true
         startGameBtn.isFocusPainted = false
         startGameBtn.addActionListener { startGame() }
         container.add(startGameBtn)
 
-        gameSettingsBtn.location = Point((fSize.width - btnDimension.width) / 2, 325)
+        gameSettingsBtn.location = Point((fSize.width * fScale  - 150).toInt() / 2, 325)
         gameSettingsBtn.size = btnDimension
         gameSettingsBtn.isVisible = true
         gameSettingsBtn.isFocusPainted = false
@@ -52,7 +55,8 @@ class LFrame : JFrame() {
 
     fun getGameScene(): Container {
         val container = Container()
-        container.preferredSize = fSize
+        container.preferredSize =
+            Dimension((fSize.width * fScale ).toInt(), (fSize.height * fScale ).toInt())
         container.layout = null
 
         bombsCountLabel.setBounds(50, 10, 150, 40)
@@ -62,14 +66,14 @@ class LFrame : JFrame() {
         container.add(coveredTileCountLabel)
 
         val btnContainer = JPanel()
-        btnContainer.preferredSize = Dimension(btnField.width * 20, btnField.height * 20)
+        btnContainer.preferredSize = Dimension((btnField.width * 20 * fScale).toInt(), (btnField.height * 20 * fScale).toInt())
 //        btnContainer.isFocusable = false
 //        btnContainer.layout = GridLayout(btnField.width, btnField.height)
         btnContainer.layout = null
 
         val scroll = JScrollPane()
         scroll.setViewportView(btnContainer)
-        scroll.setBounds(50, 50, 700, 500)
+        scroll.setBounds(50, 50, (700 * fScale ).toInt(), (500 * fScale ).toInt())
         scroll.verticalScrollBar.unitIncrement = 10
         scroll.horizontalScrollBar.unitIncrement = 10
         scroll.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_ALWAYS
@@ -84,14 +88,19 @@ class LFrame : JFrame() {
                 btnList[y].add(SweeperTile())
 
 //                btnList[y][x].preferredSize = Dimension(20,20)
-                btnList[y][x].setBounds(x * 20, y * 20, 20, 20)
+                btnList[y][x].setBounds(
+                    (x * 20 * fScale ).toInt(),
+                    (y * 20 * fScale ).toInt(),
+                    (20 * fScale ).toInt(),
+                    (20 * fScale ).toInt()
+                )
 
                 btnList[y][x].setFocusPainted(false)
 //                btnList[y][x].text =  "${x}"
                 btnList[y][x].isFocusable = false
                 btnList[y][x].border = BorderFactory.createRaisedBevelBorder()
                 btnList[y][x].background = Color(200, 200, 200)
-                btnList[y][x].font = Font("Arial", Font.BOLD, 15)
+                btnList[y][x].font = Font("Arial", Font.BOLD, (15 * fScale).roundToInt())
                 btnList[y][x].addActionListener {
                     if ((btnList[y][x].text == "F") && (!btnList[y][x].isRevealed())) {
                         btnList[y][x].text = "?"
@@ -142,41 +151,51 @@ class LFrame : JFrame() {
 
         val widthField = JTextField()
         widthField.text = btnField.width.toString()
-        widthField.setBounds((fSize.width + 100) / 2, 100, 50, 50)
+        widthField.setBounds((fSize.width * fScale  + 100).toInt() / 2, 100, 50, 50)
         container.add(widthField)
 
         val widthLabel = JLabel("Game Field Width")
-        widthLabel.setBounds((fSize.width - 150) / 2, 100, 150, 50)
+        widthLabel.setBounds((fSize.width * fScale  - 150).toInt() / 2, 100, 150, 50)
         container.add(widthLabel)
 
         val heightField = JTextField()
         heightField.text = btnField.height.toString()
-        heightField.setBounds((fSize.width + 100) / 2, 175, 50, 50)
+        heightField.setBounds((fSize.width * fScale  + 100).toInt() / 2, 175, 50, 50)
         container.add(heightField)
 
         val heightLabel = JLabel("Game Field Height")
-        heightLabel.setBounds((fSize.width - 150) / 2, 175, 150, 50)
+        heightLabel.setBounds((fSize.width * fScale  - 150).toInt() / 2, 175, 150, 50)
         container.add(heightLabel)
 
         val bombsCountField = JTextField()
         bombsCountField.text = bombsCount.toString()
-        bombsCountField.setBounds((fSize.width + 100) / 2, 250, 50, 50)
+        bombsCountField.setBounds((fSize.width * fScale  + 100).toInt() / 2, 250, 50, 50)
         container.add(bombsCountField)
 
         val bombsCountLabel = JLabel("Bombs Count")
-        bombsCountLabel.setBounds((fSize.width - 150) / 2, 250, 150, 50)
+        bombsCountLabel.setBounds((fSize.width * fScale  - 150).toInt() / 2, 250, 150, 50)
         container.add(bombsCountLabel)
 
+        val windowScaleField = JTextField()
+        windowScaleField.text = (fScale * 100).toString()
+        windowScaleField.setBounds((fSize.width * fScale  + 100).toInt() / 2, 325, 50, 50)
+        container.add(windowScaleField)
+
+        val windowScaleLabel = JLabel("Scale")
+        windowScaleLabel.setBounds((fSize.width * fScale  - 150).toInt() / 2, 325, 150, 50)
+        container.add(windowScaleLabel)
+
         val confirmBtn = JButton("save")
-        confirmBtn.setBounds((fSize.width - 200) / 2, 325, 200, 50)
+        confirmBtn.setBounds((fSize.width * fScale  - 200).toInt() / 2, 400, 200, 50)
         confirmBtn.addActionListener {
             try {
                 btnField = Dimension(widthField.text.toInt(), heightField.text.toInt())
                 bombsCount = bombsCountField.text.toInt()
                 tilesCovered = btnField.width * btnField.height
+                fScale = windowScaleField.text.toFloat() / 100f
+
                 startGame()
-            }
-            catch (_:Exception){
+            } catch (_: Exception) {
                 JOptionPane.showMessageDialog(this, "Please just enter Numbers", "Error", JOptionPane.PLAIN_MESSAGE)
             }
         }
